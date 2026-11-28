@@ -1,0 +1,468 @@
+[
+    {
+        "id": "81f2f965e4de32a7",
+        "type": "tab",
+        "label": "Flux 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "in_places",
+        "type": "mqtt in",
+        "z": "81f2f965e4de32a7",
+        "name": "places",
+        "topic": "parking22/places",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "e9508e09ad6d9573",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 230,
+        "y": 120,
+        "wires": [
+            [
+                "fn_etat",
+                "dbg1"
+            ]
+        ]
+    },
+    {
+        "id": "fn_etat",
+        "type": "function",
+        "z": "81f2f965e4de32a7",
+        "name": "calcul etat",
+        "func": "let p = msg.payload;\nif (typeof p === 'string') { try { p = JSON.parse(p); } catch(e) { return null; } }\nlet places = [p.p1, p.p2, p.p3];\nlet libres = places.filter(x => x === \"libre\").length;\nflow.set(\"libres\", libres);\nmsg.payload = {libres: libres, places: places, complet: libres === 0};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 120,
+        "wires": [
+            [
+                "out_etat",
+                "dbg2"
+            ]
+        ]
+    },
+    {
+        "id": "out_etat",
+        "type": "mqtt out",
+        "z": "81f2f965e4de32a7",
+        "name": "etat",
+        "topic": "parking22/etat",
+        "qos": "0",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e9508e09ad6d9573",
+        "x": 650,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "in_entree",
+        "type": "mqtt in",
+        "z": "81f2f965e4de32a7",
+        "name": "entree",
+        "topic": "parking22/entree",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "e9508e09ad6d9573",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 230,
+        "y": 240,
+        "wires": [
+            [
+                "fn_decision"
+            ]
+        ]
+    },
+    {
+        "id": "fn_decision",
+        "type": "function",
+        "z": "81f2f965e4de32a7",
+        "name": "decision",
+        "func": "let libres = flow.get(\"libres\");\nif (libres === undefined) libres = 0;\nif (libres > 0) {\n  return [{payload: \"open\"}, null];\n}\nreturn [{payload: \"refuse\"}, {payload: {msg: \"Parking complet\", ts: Date.now()}}];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 240,
+        "wires": [
+            [
+                "out_cmd"
+            ],
+            [
+                "out_alerte"
+            ]
+        ]
+    },
+    {
+        "id": "out_cmd",
+        "type": "mqtt out",
+        "z": "81f2f965e4de32a7",
+        "name": "cmd barriere",
+        "topic": "parking22/barriere/cmd",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e9508e09ad6d9573",
+        "x": 670,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "out_alerte",
+        "type": "mqtt out",
+        "z": "81f2f965e4de32a7",
+        "name": "alerte",
+        "topic": "parking22/alerte",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e9508e09ad6d9573",
+        "x": 650,
+        "y": 270,
+        "wires": []
+    },
+    {
+        "id": "dbg1",
+        "type": "debug",
+        "z": "81f2f965e4de32a7",
+        "name": "places recu",
+        "active": true,
+        "tosidebar": true,
+        "complete": "payload",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 440,
+        "y": 70,
+        "wires": []
+    },
+    {
+        "id": "dbg2",
+        "type": "debug",
+        "z": "81f2f965e4de32a7",
+        "name": "etat envoye",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 170,
+        "wires": []
+    },
+    {
+        "id": "sql_init",
+        "type": "inject",
+        "z": "81f2f965e4de32a7",
+        "name": "Creer table",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 320,
+        "wires": [
+            [
+                "sql_create"
+            ]
+        ]
+    },
+    {
+        "id": "sql_create",
+        "type": "function",
+        "z": "81f2f965e4de32a7",
+        "name": "CREATE TABLE",
+        "func": "msg.topic = \"CREATE TABLE IF NOT EXISTS historique (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER, type TEXT, details TEXT)\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 320,
+        "wires": [
+            [
+                "sql_db"
+            ]
+        ]
+    },
+    {
+        "id": "sql_db",
+        "type": "sqlite",
+        "z": "81f2f965e4de32a7",
+        "mydb": "sqlitedb1",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "SQLite",
+        "x": 810,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "in_etat_h",
+        "type": "mqtt in",
+        "z": "81f2f965e4de32a7",
+        "name": "etat (histo)",
+        "topic": "parking22/etat",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "e9508e09ad6d9573",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 150,
+        "y": 400,
+        "wires": [
+            [
+                "fn_ins_etat"
+            ]
+        ]
+    },
+    {
+        "id": "fn_ins_etat",
+        "type": "function",
+        "z": "81f2f965e4de32a7",
+        "name": "INSERT etat",
+        "func": "let e = msg.payload;\nif (typeof e === 'string') { try { e = JSON.parse(e); } catch(x) { return null; } }\nlet last = flow.get('lastLibres');\nif (last === e.libres) return null;   // enregistrer seulement si changement\nflow.set('lastLibres', e.libres);\nlet d = JSON.stringify(e).replace(/'/g, \"''\");\nmsg.topic = \"INSERT INTO historique (ts,type,details) VALUES (\" + Date.now() + \",'etat','\" + d + \"')\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 400,
+        "wires": [
+            [
+                "sql_db"
+            ]
+        ]
+    },
+    {
+        "id": "in_alerte_h",
+        "type": "mqtt in",
+        "z": "81f2f965e4de32a7",
+        "name": "alerte (histo)",
+        "topic": "parking22/alerte",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "e9508e09ad6d9573",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 150,
+        "y": 460,
+        "wires": [
+            [
+                "fn_ins_alerte"
+            ]
+        ]
+    },
+    {
+        "id": "fn_ins_alerte",
+        "type": "function",
+        "z": "81f2f965e4de32a7",
+        "name": "INSERT alerte",
+        "func": "let a = msg.payload;\nlet txt = (typeof a === 'object') ? a.msg : String(a);\nmsg.topic = \"INSERT INTO historique (ts,type,details) VALUES (\" + Date.now() + \",'alerte','\" + String(txt).replace(/'/g, \"''\") + \"')\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 460,
+        "wires": [
+            [
+                "sql_db"
+            ]
+        ]
+    },
+    {
+        "id": "http_in",
+        "type": "http in",
+        "z": "81f2f965e4de32a7",
+        "name": "GET /historique",
+        "url": "/historique",
+        "method": "get",
+        "upload": false,
+        "x": 160,
+        "y": 540,
+        "wires": [
+            [
+                "fn_select"
+            ]
+        ]
+    },
+    {
+        "id": "fn_select",
+        "type": "function",
+        "z": "81f2f965e4de32a7",
+        "name": "SELECT",
+        "func": "msg.topic = \"SELECT id, ts, type, details FROM historique ORDER BY id DESC LIMIT 50\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 540,
+        "wires": [
+            [
+                "sql_sel"
+            ]
+        ]
+    },
+    {
+        "id": "sql_sel",
+        "type": "sqlite",
+        "z": "81f2f965e4de32a7",
+        "mydb": "sqlitedb1",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "SQLite (lecture)",
+        "x": 560,
+        "y": 540,
+        "wires": [
+            [
+                "fn_cors"
+            ]
+        ]
+    },
+    {
+        "id": "fn_cors",
+        "type": "function",
+        "z": "81f2f965e4de32a7",
+        "name": "JSON + CORS",
+        "func": "msg.headers = {'Access-Control-Allow-Origin':'*','Content-Type':'application/json'};\nmsg.payload = msg.payload || [];\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 540,
+        "wires": [
+            [
+                "http_out"
+            ]
+        ]
+    },
+    {
+        "id": "http_out",
+        "type": "http response",
+        "z": "81f2f965e4de32a7",
+        "name": "",
+        "statusCode": "200",
+        "headers": {},
+        "x": 940,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "e9508e09ad6d9573",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "vd2a1e71.ala.us-east-1.emqxsl.com",
+        "port": "8883",
+        "tls": "8d8f5be1cd79f489",
+        "clientid": "nodered-parking22",
+        "autoConnect": true,
+        "usetls": true,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "sqlitedb1",
+        "type": "sqlitedb",
+        "db": "parking.db",
+        "mode": "RWC"
+    },
+    {
+        "id": "8d8f5be1cd79f489",
+        "type": "tls-config",
+        "name": "",
+        "certType": "files",
+        "cert": "",
+        "key": "",
+        "p12": "",
+        "p12name": "",
+        "ca": "",
+        "certname": "",
+        "keyname": "",
+        "caname": "",
+        "servername": "",
+        "verifyservercert": false,
+        "alpnprotocol": "",
+        "certEnv": "",
+        "keyEnv": "",
+        "caEnv": ""
+    },
+    {
+        "id": "45af9287642fe9cd",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-sqlite": "2.0.1"
+        }
+    }
+]
