@@ -88,7 +88,7 @@
   }
 
   /* Boutons de contrôle */
-  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .controls { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
   button.ctrl {
     padding: 11px 12px; border: none; border-radius: 8px; font-weight: 700; font-size: 0.85rem;
     cursor: pointer; color: white; transition: transform 0.1s, opacity 0.2s;
@@ -186,9 +186,6 @@
 Parking DISPON.</div>
 
     <div class="controls">
-      <button class="ctrl btn-open" onclick="sendCmd('open')">🔓 Ouvrir (MQTT)</button>
-      <button class="ctrl btn-close" onclick="sendCmd('close')">🔒 Fermer (MQTT)</button>
-      <button class="ctrl btn-refuse" onclick="sendCmd('refuse')">⛔ Refuser (MQTT)</button>
       <button class="ctrl btn-sim" onclick="arriveeVoiture()">🚗 Test Local 3D</button>
     </div>
   </div>
