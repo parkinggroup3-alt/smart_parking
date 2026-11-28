@@ -1,7 +1,0 @@
-# Wokwi Library List
-# See https://docs.wokwi.com/guides/libraries
-
-
-PubSubClient
-ESP32Servo
-LiquidCrystal I2C
