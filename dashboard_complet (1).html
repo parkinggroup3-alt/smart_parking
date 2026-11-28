@@ -33,8 +33,6 @@
   .badge { padding: 5px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; }
   .badge.off { background: rgba(239, 68, 68, 0.2); color: var(--red); border: 1px solid var(--red); }
   .badge.on { background: rgba(16, 185, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
-  #sound-btn { background: var(--orange); color: #000; border: none; cursor: pointer; }
-  #sound-btn.active { background: var(--green); color: #fff; }
 
   /* Alerte Banner */
   #alert-box {
@@ -121,7 +119,6 @@
     <small style="color:var(--muted)">Supervision Unifiée : Jumeau Numérique 3D + Node-RED + Wokwi + MQTT</small>
   </div>
   <div class="header-badges">
-    <button id="sound-btn" class="badge" onclick="initAudio()">🔇 Activer Son</button>
     <div id="mqtt-status" class="badge off">Déconnecté</div>
   </div>
 </header>
@@ -204,44 +201,6 @@ Parking DISPON.</div>
 </div>
 
 <script>
-// ===== 1. SYSTÈME AUDIO (Buzzer Wokwi) =====
-let audioCtx = null;
-function initAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const btn = document.getElementById("sound-btn");
-  btn.textContent = "🔊 Son ON";
-  btn.classList.add("active");
-}
-window.addEventListener('click', initAudio, { once: true });
-
-function playBuzzer(type) {
-  initAudio();
-  if (!audioCtx) return;
-  const now = audioCtx.currentTime;
-  if (type === "open") {
-    [0, 0.15].forEach(d => {
-      const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-      osc.type = "square"; osc.frequency.setValueAtTime(1200, now + d);
-      g.gain.setValueAtTime(0.08, now + d); g.gain.exponentialRampToValueAtTime(0.001, now + d + 0.1);
-      osc.connect(g); g.connect(audioCtx.destination);
-      osc.start(now + d); osc.stop(now + d + 0.1);
-    });
-  } else if (type === "close") {
-    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-    osc.type = "square"; osc.frequency.setValueAtTime(600, now);
-    g.gain.setValueAtTime(0.08, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.start(now); osc.stop(now + 0.25);
-  } else if (type === "refuse") {
-    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-    osc.type = "sawtooth"; osc.frequency.setValueAtTime(300, now);
-    g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.start(now); osc.stop(now + 0.6);
-  }
-}
-
 // ===== 2. SCÈNE 3D (Intégrée dans #canvas-container) =====
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
@@ -353,7 +312,6 @@ let barrierTarget = 0, closeTimer = null;
 const cars = [];
 
 function openBarrier() {
-  if (barrierTarget === 0) playBuzzer("open");
   barrierTarget = -Math.PI * 0.45;
   const kpiBar = document.getElementById('kpi-barriere');
   kpiBar.textContent = "OUVERTE"; kpiBar.style.color = "var(--green)";
@@ -362,7 +320,6 @@ function openBarrier() {
 }
 
 function closeBarrier() {
-  if (barrierTarget !== 0) playBuzzer("close");
   barrierTarget = 0;
   const kpiBar = document.getElementById('kpi-barriere');
   kpiBar.textContent = "FERMÉE"; kpiBar.style.color = "var(--orange)";
@@ -393,7 +350,6 @@ function tick(dt) {
         const freeIndex = etatPlaces.indexOf("libre");
         if (k.forceDecision === "refuse" || (k.forceDecision === null && freeIndex === -1)) {
           k.state = "refused"; k.wait = 0;
-          playBuzzer("refuse");
           const kpiBar = document.getElementById('kpi-barriere');
           kpiBar.textContent = "REFUSÉE"; kpiBar.style.color = "var(--red)";
           afficherAlerte("Parking COMPLET ! Accès refusé.");
